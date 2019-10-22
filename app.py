@@ -1,14 +1,13 @@
 #!flask/bin/python
 from flask import Flask, request, jsonify
 from flask_cors import CORS
-from pandas import HDFStore
+import pandas
 from annoy import AnnoyIndex
 from document_embedding import document_embedding
 
 embedding_size = 300
 
-song_store = HDFStore('songs.h5')
-song_table = song_store.get('/mat')
+song_table = pandas.read_hdf('songs.h5')
 song_embeddings = AnnoyIndex(embedding_size, 'angular')
 song_embeddings.load('test.ann')
 
