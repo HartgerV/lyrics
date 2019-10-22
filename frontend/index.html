@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <title>Find similar lyrics</title>
+
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bulma/0.7.5/css/bulma.min.css">
+    <link rel="stylesheet" href="collapsible.css">
+    <script defer src="https://use.fontawesome.com/releases/v5.3.1/js/all.js"></script>
+    <style>
+        .button {
+            background-color: #1DB954;
+            color: #FFFFFF;
+        }
+        .columns {
+            display: flex;
+            /*flex-direction: row; // this is default*/
+            align-items: stretch; // this will stretch the children vertically
+        }
+        .small {
+            max-width: 100px;
+        }
+
+        .fill {
+            width: 100%;
+            height: 100%;
+        }
+
+        body {
+	        height: 1800px;
+            rgba(30, 215, 96, .1);
+        }
+    </style>
+</head>
+<script>
+// capitalize first char of string
+function capitalize(s) {
+    if (typeof s !== 'string') return '';
+    return s.charAt(0).toUpperCase() + s.slice(1)
+}
+// changes format of songnames and artist names from machine friendly to presentable
+// Ex: queen bohemian-rapsody -> Queen - Bohemian Rapsody
+function makeSongString(artist, songtitle) {
+    let result = "";
+    artist = artist.split('-');
+    artist.forEach(function(e) {
+        result += " " + capitalize(e);
+    });
+    result += "-";
+    songtitle = songtitle.split('-');
+    songtitle.forEach(function(e) {
+        result += " " + capitalize(e);
+    })
+    return result;
+}
+
+function makeHTML(data) {
+    html = "";
+    i=0;
+    data.forEach(function(song) {
+        songName = makeSongString(song.artist, song.songtitle);
+        html += "<div class=\"wrap-collabsible\">\n" +
+            "  <input id=\"collapsible"+i+"\" class=\"toggle\" type=\"checkbox\">\n" +
+            "  <label for=\"collapsible"+i+"\" class=\"lbl-toggle\">" + songName + "(dist:" + song.distance + ")</label>\n" +
+            "  <div class=\"collapsible-content\">\n" +
+            "    <div class=\"content-inner\">\n" +
+            "      <pre>\n" +
+                    song.lyrics +
+            "      </pre>\n" +
+            "    </div>\n" +
+            "  </div>\n" +
+            "</div>"
+        i++;
+    });
+    return html;
+}
+function getSimilarLyrics() {
+    button = document.getElementById("button");
+    button.classList.add("is-loading");
+    var xhr = new XMLHttpRequest();
+    var url = "http://localhost:5000";
+    xhr.open("POST", url, true);
+    xhr.setRequestHeader("Content-Type", "application/json");
+    xhr.onreadystatechange = function () {
+        if (xhr.readyState === 4 && xhr.status === 200) {
+            var json = JSON.parse(xhr.responseText);
+            document.getElementById("results").innerHTML = makeHTML(json);
+            button.classList.remove("is-loading");
+        }
+    };
+    query = document.getElementById("query").value;
+    var data = JSON.stringify({"query": query});
+    xhr.send(data);
+}
+</script>
+<body>
+<div class="columns">
+  <div class="column">
+      <div class="wrap-collabsible">
+  <input id="collapsible" class="toggle" type="checkbox" checked>
+  <label for="collapsiblenone" class="lbl-toggle">Input</label>
+  <div class="collapsible-content">
+    <div class="content-inner">
+      <p>
+        Input the text you want to query against below:
+        <textarea class="fill" id="query" rows="50">
+        Insert text here!
+        </textarea>
+      </p>
+    </div>
+  </div>
+</div>
+
+  </div>
+    <div class="column small">
+        <button id="button" style="top:50%" class="button is-large" onclick="getSimilarLyrics()">
+            ->
+        </button>
+    </div>
+    <div class="column" id="results">
+
+    </div>
+</div>
+</body>
+</html>
